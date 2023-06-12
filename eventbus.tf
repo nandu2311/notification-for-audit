@@ -134,9 +134,8 @@ resource "aws_cloudwatch_event_rule" "s3_activity" {
   })
 }
 
-resource "aws_cloudwatch_event_target" "s3-attach-sns" {
+/* resource "aws_cloudwatch_event_target" "s3-attach-sns" {
   rule      = aws_cloudwatch_event_rule.console-login.name
-  /* target_id = "SendToSNS" */
   arn       = aws_sns_topic.send-msg-topic.arn
   event_bus_name = aws_cloudwatch_event_bus.audit-bus.name
 
@@ -179,4 +178,4 @@ resource "aws_cloudwatch_event_target" "s3-activity-sns" {
     input_template = "\"A <s3_activity> for <s3_bucket_name> API Call was made against the S3 Bucket with the following details 'Region' - <region>, 'Source' - <source>, 'Bucket Activity' - <s3_activity>, 'EventTime' - <time>, 'User' - <user>\""
 
   }
-}
+} */
