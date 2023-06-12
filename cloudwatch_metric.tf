@@ -19,6 +19,7 @@ resource "aws_cloudwatch_metric_alarm" "console-failure-alarm" {
   period                    = 120
   statistic                 = "Sum"
   threshold                 = 3
+  datapoints_to_alarm       = 2
   alarm_description         = "This metric monitors console login failure"
   actions_enabled           = "true"
   alarm_actions             = [aws_sns_topic.send-msg-topic.arn]
@@ -29,7 +30,7 @@ resource "aws_cloudwatch_metric_alarm" "console-failure-alarm" {
 
 resource "aws_cloudwatch_log_metric_filter" "console-login-success" {
   name           = "ConsoleLoginSuccess"
-  pattern = "{ ($.eventName = ConsoleLogin) }"
+  pattern        = "{ ($.eventName = ConsoleLogin) }"
   log_group_name = aws_cloudwatch_log_group.audit-logs.name
 
   metric_transformation {
@@ -48,6 +49,7 @@ resource "aws_cloudwatch_metric_alarm" "console-success-alarm" {
   period                    = 120
   statistic                 = "Sum"
   threshold                 = 1
+  datapoints_to_alarm       = 1
   alarm_description         = "This metric monitors console login Success"
   actions_enabled           = "true"
   alarm_actions             = [aws_sns_topic.send-msg-topic.arn]
@@ -76,6 +78,7 @@ resource "aws_cloudwatch_metric_alarm" "iam-authentication-alarm" {
   period                    = 120
   statistic                 = "Sum"
   threshold                 = 1
+  datapoints_to_alarm       = 1
   alarm_description         = "This metric monitors IAM Authentication and Authorization Activity"
   actions_enabled           = "true"
   alarm_actions             = [aws_sns_topic.send-msg-topic.arn]
@@ -84,9 +87,8 @@ resource "aws_cloudwatch_metric_alarm" "iam-authentication-alarm" {
 
 #IAM Policy Changes Notification
 resource "aws_cloudwatch_log_metric_filter" "iam-policy-activity" {
-  name           = "IAMPolicyChanges"
-  /* pattern        = "{($.eventName = \"DeleteGroupPolicy\") || ($.eventName = \"DeleteRolePolicy\") || ($.eventName = \"DeleteUserPolicy\") || ($.eventName = \"PutGroupPolicy\") || ($.eventName = \"PutRolePolicy\") || ($.eventName = \"PutUserPolicy\") || ($.eventName = \"CreatePolicy\") || ($.eventName = \"DeletePolicy\") || ($.eventName = \"CreatePolicyVersion\") || ($.eventName = \"DeletePolicyVersion\") || ($.eventName = \"AttachRolePolicy\") || ($.eventName = \"DetachRolePolicy\") || ($.eventName = \"AttachUserPolicy\") || ($.eventName = \"DetachUserPolicy\") || ($.eventName = \"AttachGroupPolicy\") || ($.eventName = \"DetachGroupPolicy\")} }" */
-  pattern = "{($.eventName = \"DeleteGroupPolicy|DeleteRolePolicy|DeleteUserPolicy|PutGroupPolicy|PutRolePolicy|PutUserPolicy|CreatePolicy|DeletePolicy|CreatePolicyVersion|DeletePolicyVersion|AttachRolePolicy|DetachRolePolicy|AttachUserPolicy|DetachUserPolicy|AttachGroupPolicy|DetachGroupPolicy\" )}"
+  name = "IAMPolicyChanges"
+  pattern        = "{($.eventName = \"DeleteGroupPolicy\") || ($.eventName = \"DeleteRolePolicy\") || ($.eventName = \"DeleteUserPolicy\") || ($.eventName = \"PutGroupPolicy\") || ($.eventName = \"PutRolePolicy\") || ($.eventName = \"PutUserPolicy\") || ($.eventName = \"CreatePolicy\") || ($.eventName = \"DeletePolicy\") || ($.eventName = \"CreatePolicyVersion\") || ($.eventName = \"DeletePolicyVersion\") || ($.eventName = \"AttachRolePolicy\") || ($.eventName = \"DetachRolePolicy\") || ($.eventName = \"AttachUserPolicy\") || ($.eventName = \"DetachUserPolicy\") || ($.eventName = \"AttachGroupPolicy\") || ($.eventName = \"DetachGroupPolicy\")}"
   log_group_name = aws_cloudwatch_log_group.audit-logs.name
 
   metric_transformation {
@@ -105,6 +107,7 @@ resource "aws_cloudwatch_metric_alarm" "iam-policy-alarm" {
   period                    = 120
   statistic                 = "Sum"
   threshold                 = 1
+  datapoints_to_alarm       = 1
   alarm_description         = "This metric monitors IAM Policy Activity"
   actions_enabled           = "true"
   alarm_actions             = [aws_sns_topic.send-msg-topic.arn]
@@ -133,7 +136,8 @@ resource "aws_cloudwatch_metric_alarm" "security-group-alarm" {
   period                    = 120
   statistic                 = "Sum"
   threshold                 = 1
-  alarm_description         = "This metric monitors IAM Policy Activity"
+  datapoints_to_alarm       = 1
+  alarm_description         = "This metric monitors Security Group configuration changes Activity"
   actions_enabled           = "true"
   alarm_actions             = [aws_sns_topic.send-msg-topic.arn]
   insufficient_data_actions = []

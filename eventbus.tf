@@ -31,9 +31,9 @@ resource "aws_cloudwatch_event_bus_policy" "audit-bus-policy-attachment" {
 ### Create Event Rules 
 
 # 1) Console login notification
-resource "aws_cloudwatch_event_rule" "console-login" {
-  name        = "aws_sign_in"
-  description = "capture each AWS console Sign In"
+/* resource "aws_cloudwatch_event_rule" "console-login" {
+  name           = "aws_sign_in"
+  description    = "capture each AWS console Sign In"
   event_bus_name = aws_cloudwatch_event_bus.audit-bus.name
 
   event_pattern = <<EOF
@@ -46,17 +46,16 @@ EOF
 }
 
 resource "aws_cloudwatch_event_target" "console-attach-sns" {
-  rule      = aws_cloudwatch_event_rule.console-login.name
-  /* target_id = "SendToSNS" */
-  arn       = aws_sns_topic.send-msg-topic.arn
+  rule = aws_cloudwatch_event_rule.console-login.name
+  arn            = aws_sns_topic.send-msg-topic.arn
   event_bus_name = aws_cloudwatch_event_bus.audit-bus.name
-  
+
 
 }
 
 resource "aws_cloudwatch_event_target" "console-login-sns" {
-  arn  = aws_sns_topic.send-msg-topic.arn
-  rule = aws_cloudwatch_event_rule.console-login.name
+  arn            = aws_sns_topic.send-msg-topic.arn
+  rule           = aws_cloudwatch_event_rule.console-login.name
   event_bus_name = aws_cloudwatch_event_bus.audit-bus.name
 
   input_transformer {
@@ -70,40 +69,36 @@ resource "aws_cloudwatch_event_target" "console-login-sns" {
     }
     input_template = "\"Notification Console Login In your AWS Account '<user>' in the region '<region>' at the time '<time>' the following took place: <event> and <source> \""
   }
-}
+} */
 
 ### EC2 Instance state change notification
 resource "aws_cloudwatch_event_rule" "ec2-status-changes" {
-  name        = "ec2-status-change"
-  description = "Capture each Instance state like Stop, Start, Terminate, Reboot"
-  event_bus_name = aws_cloudwatch_event_bus.audit-bus.name
+  name           = "ec2-status-change"
+  description    = "Capture each Instance state like Stop, Start, Terminate"
+  /* event_bus_name = aws_cloudwatch_event_bus.audit-bus.name */
 
-  event_pattern = <<EOF
-    {
-      "source": ["aws.ec2"],
-      "detail-type": ["AWS API Call via CloudTrail"],
-      "detail": {
-        "eventSource": ["ec2.amazonaws.com"],
-        "eventName": ["StartInstances", "StopInstances", "TerminateInstances", "RebootInstances"]
-      }
+  event_pattern = jsonencode({
+    source = ["aws.ec2"]
+    detail-type = ["EC2 Instance State-change Notification"]
+    detail = {
+      state = ["terminated", "stopped", "running"]
     }
-  EOF
+  })
 }
 
 
 resource "aws_cloudwatch_event_target" "ec2-attach-sns" {
-  rule      = aws_cloudwatch_event_rule.console-login.name
-  /* target_id = "SendToSNS" */
-  arn       = aws_sns_topic.send-msg-topic.arn
-  event_bus_name = aws_cloudwatch_event_bus.audit-bus.name
+  rule = aws_cloudwatch_event_rule.ec2-status-changes.name
+  arn            = aws_sns_topic.send-msg-topic.arn
+  /* event_bus_name = aws_cloudwatch_event_bus.audit-bus.name */
 
 
 }
 
 resource "aws_cloudwatch_event_target" "ec2-status-sns" {
-  arn  = aws_sns_topic.send-msg-topic.arn
-  rule = aws_cloudwatch_event_rule.ec2-status-changes.name
-  event_bus_name = aws_cloudwatch_event_bus.audit-bus.name
+  arn            = aws_sns_topic.send-msg-topic.arn
+  rule           = aws_cloudwatch_event_rule.ec2-status-changes.name
+  /* event_bus_name = aws_cloudwatch_event_bus.audit-bus.name */
 
   input_transformer {
     input_paths = {
@@ -122,9 +117,9 @@ resource "aws_cloudwatch_event_target" "ec2-status-sns" {
 }
 
 ## S3 Activity on Bucket and all objects
-resource "aws_cloudwatch_event_rule" "s3_activity" {
-  name        = "s3-activity"
-  description = "capture each state of bucket activity like listbucket, createbucket, deletebucket"
+/* resource "aws_cloudwatch_event_rule" "s3_activity" {
+  name           = "s3-activity"
+  description    = "capture each state of bucket activity like listbucket, createbucket, deletebucket"
   event_bus_name = aws_cloudwatch_event_bus.audit-bus.name
 
   event_pattern = jsonencode({
@@ -132,7 +127,7 @@ resource "aws_cloudwatch_event_rule" "s3_activity" {
       "aws.s3"
     ]
   })
-}
+} */
 
 /* resource "aws_cloudwatch_event_target" "s3-attach-sns" {
   rule      = aws_cloudwatch_event_rule.console-login.name
