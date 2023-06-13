@@ -1,11 +1,11 @@
 
 ## Create Cloudwatch EventBus 
-resource "aws_cloudwatch_event_bus" "audit-bus" {
+/* resource "aws_cloudwatch_event_bus" "audit-bus" {
   name = "audit-event-bus"
-}
+} */
 
 ## eventbus policy
-data "aws_iam_policy_document" "audit-eventbus-policy" {
+/* data "aws_iam_policy_document" "audit-eventbus-policy" {
   statement {
     sid    = "DevAccountAccess"
     effect = "Allow"
@@ -26,7 +26,7 @@ data "aws_iam_policy_document" "audit-eventbus-policy" {
 resource "aws_cloudwatch_event_bus_policy" "audit-bus-policy-attachment" {
   policy         = data.aws_iam_policy_document.audit-eventbus-policy.json
   event_bus_name = aws_cloudwatch_event_bus.audit-bus.name
-}
+} */
 
 ### Create Event Rules 
 
@@ -72,35 +72,35 @@ resource "aws_cloudwatch_event_target" "console-login-sns" {
 } */
 
 ### EC2 Instance state change notification
-resource "aws_cloudwatch_event_rule" "ec2-status-changes" {
-  name           = "ec2-status-change"
-  description    = "Capture each Instance state like Stop, Start, Terminate"
+/* resource "aws_cloudwatch_event_rule" "ec2-status-changes" {
+  name        = "ec2-status-change"
+  description = "Capture each Instance state like Stop, Start, Terminate"
   /* event_bus_name = aws_cloudwatch_event_bus.audit-bus.name */
-
+/* 
   event_pattern = jsonencode({
-    source = ["aws.ec2"]
+    source      = ["aws.ec2"]
     detail-type = ["EC2 Instance State-change Notification"]
     detail = {
       state = ["terminated", "stopped", "running"]
     }
   })
-}
+} */ 
 
 
-resource "aws_cloudwatch_event_target" "ec2-attach-sns" {
+/* resource "aws_cloudwatch_event_target" "ec2-attach-sns" {
   rule = aws_cloudwatch_event_rule.ec2-status-changes.name
-  arn            = aws_sns_topic.send-msg-topic.arn
+  arn  = aws_sns_topic.send-msg-topic.arn
+  event_bus_name = aws_cloudwatch_event_bus.audit-bus.name
+
+
+} */
+
+/* resource "aws_cloudwatch_event_target" "ec2-status-sns" {
+  arn  = aws_sns_topic.send-msg-topic.arn
+  rule = aws_cloudwatch_event_rule.ec2-status-changes.name */
   /* event_bus_name = aws_cloudwatch_event_bus.audit-bus.name */
 
-
-}
-
-resource "aws_cloudwatch_event_target" "ec2-status-sns" {
-  arn            = aws_sns_topic.send-msg-topic.arn
-  rule           = aws_cloudwatch_event_rule.ec2-status-changes.name
-  /* event_bus_name = aws_cloudwatch_event_bus.audit-bus.name */
-
-  input_transformer {
+  /* input_transformer {
     input_paths = {
       instance  = "$.detail.requestParameters.instancesSet.items",
       status    = "$.detail.status",
@@ -114,7 +114,7 @@ resource "aws_cloudwatch_event_target" "ec2-status-sns" {
     }
     input_template = "\"In your AWS Account '<user>' in the region '<region>' at the time '<time>' the following took place: <event> of this instance <instance> and source of <source>.\""
   }
-}
+} */
 
 ## S3 Activity on Bucket and all objects
 /* resource "aws_cloudwatch_event_rule" "s3_activity" {
