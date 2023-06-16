@@ -17,7 +17,6 @@ resource "aws_cloudtrail" "audit-trail" {
   cloud_watch_logs_role_arn  = aws_iam_role.cloudtrail_cloudwatch_role.arn
   cloud_watch_logs_group_arn = "${aws_cloudwatch_log_group.audit-logs.arn}:*"
 
-
 }
 
 resource "aws_s3_bucket" "audit-bucket" {
@@ -109,18 +108,44 @@ resource "aws_iam_policy" "cloudtrail_cwl_logs_policy" {
   path        = "/"
   description = "Allows CloudTrail to write logs to the specified CloudWatch Logs log group"
 
-  policy = jsonencode({
+  /* policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
         Effect = "Allow"
         Action = [
-          "logs:*"
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+          "logs:DescribeLogStreams",
+          "logs:GetLogEvents",
+          "logs:GetLogGroupFields",
+          "logs:GetLogRecord",
+          "logs:GetQueryResults"
         ]
-        Resource = ["${aws_cloudwatch_log_group.audit-logs.arn}:*"]
+        Resource = ["${aws_cloudwatch_log_stream.audit-stream.arn}*"]
       }
     ]
-  })
+  }) */
+
+  policy = jsonencode({
+      Version = "2012-10-17"
+      Statement = [
+        {
+          Sid = "AWSCloudTrailCreateLogStream2014110"
+          Effect = "Allow"
+          Action = [ "logs:CreateLogStream" ]
+          Resource = [ "${aws_cloudwatch_log_stream.audit-stream.arn}:*" ]
+        },
+        {
+          Sid = "AWSCloudTrailPutLogEvents20141101"
+          Effect = "Allow"
+          Action = [ "logs:PutLogEvents" ]
+          Resource = [ "${aws_cloudwatch_log_stream.audit-stream.arn}:*" ]
+
+        }
+      ]
+    })
 }
 
 resource "aws_iam_role_policy_attachment" "cloudtrail_cwl_logs_policy_attachment" {
@@ -128,3 +153,10 @@ resource "aws_iam_role_policy_attachment" "cloudtrail_cwl_logs_policy_attachment
   role       = aws_iam_role.cloudtrail_cloudwatch_role.name
 }
 
+output "output-test-streamstar" {
+  value = "${aws_cloudwatch_log_stream.audit-stream.arn}:*"
+}
+
+output "output-test-withoutstart" {
+  value = aws_cloudwatch_log_stream.audit-stream.arn
+}

@@ -1,5 +1,5 @@
 resource "aws_sns_topic" "send-msg-topic" {
-  name         = "Audit-au-03"
+  name         = "Audit-SNS"
   display_name = "Audit-AU-Notification"
 }
 
