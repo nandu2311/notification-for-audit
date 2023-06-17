@@ -1,3 +1,8 @@
+variable "namespace" {
+  type = string
+  default = "CloudtrailMetrics"
+}
+
 resource "aws_cloudwatch_log_metric_filter" "console-login-failure" {
   name           = "ConsoleLoginFailures"
   pattern        = "{ ($.eventName = ConsoleLogin) && ($.errorMessage = \"Failed authentication\") }"
@@ -5,7 +10,7 @@ resource "aws_cloudwatch_log_metric_filter" "console-login-failure" {
 
   metric_transformation {
     name      = "ConsoleSigninFailureCount"
-    namespace = "CloudTrailMetrics"
+    namespace = var.namespace
     value     = "1"
   }
 }
@@ -15,7 +20,7 @@ resource "aws_cloudwatch_metric_alarm" "console-failure-alarm" {
   comparison_operator       = "GreaterThanOrEqualToThreshold"
   evaluation_periods        = 1
   metric_name               = "ConsoleSigninFailureCount"
-  namespace                 = "CloudTrailMetrics"
+  namespace                 = var.namespace
   period                    = 120
   statistic                 = "Sum"
   threshold                 = 3
@@ -36,7 +41,7 @@ resource "aws_cloudwatch_log_metric_filter" "console-login-success" {
 
   metric_transformation {
     name      = "ConsoleSigninSuccessCount"
-    namespace = "CloudTrailMetrics"
+    namespace = var.namespace
     value     = "1"
   }
 }
@@ -46,7 +51,7 @@ resource "aws_cloudwatch_metric_alarm" "console-success-alarm" {
   comparison_operator       = "GreaterThanOrEqualToThreshold"
   evaluation_periods        = 1
   metric_name               = "ConsoleSigninSuccessCount"
-  namespace                 = "CloudTrailMetrics"
+  namespace                 = var.namespace
   period                    = 120
   statistic                 = "Sum"
   threshold                 = 1
@@ -66,7 +71,7 @@ resource "aws_cloudwatch_log_metric_filter" "iam-authentication-activity" {
 
   metric_transformation {
     name      = "IAMAuthnAuthzActivity"
-    namespace = "CloudTrailMetrics"
+    namespace = var.namespace
     value     = "1"
   }
 }
@@ -76,7 +81,7 @@ resource "aws_cloudwatch_metric_alarm" "iam-authentication-alarm" {
   comparison_operator       = "GreaterThanOrEqualToThreshold"
   evaluation_periods        = 1
   metric_name               = "IAMAuthnAuthzActivity"
-  namespace                 = "CloudTrailMetrics"
+  namespace                 = var.namespace
   period                    = 120
   statistic                 = "Sum"
   threshold                 = 1
@@ -96,7 +101,7 @@ resource "aws_cloudwatch_log_metric_filter" "iam-policy-activity" {
 
   metric_transformation {
     name      = "IAMPolicyEventCount"
-    namespace = "CloudTrailMetrics"
+    namespace = var.namespace
     value     = "1"
   }
 }
@@ -106,7 +111,7 @@ resource "aws_cloudwatch_metric_alarm" "iam-policy-alarm" {
   comparison_operator       = "GreaterThanOrEqualToThreshold"
   evaluation_periods        = 1
   metric_name               = "IAMPolicyEventCount"
-  namespace                 = "CloudTrailMetrics"
+  namespace                 = var.namespace
   period                    = 120
   statistic                 = "Sum"
   threshold                 = 1
@@ -126,7 +131,7 @@ resource "aws_cloudwatch_log_metric_filter" "security-group-activity" {
 
   metric_transformation {
     name      = "SecurityGroupEventCount"
-    namespace = "CloudTrailMetrics"
+    namespace = var.namespace
     value     = "1"
   }
 }
@@ -136,7 +141,7 @@ resource "aws_cloudwatch_metric_alarm" "security-group-alarm" {
   comparison_operator       = "GreaterThanOrEqualToThreshold"
   evaluation_periods        = 1
   metric_name               = "SecurityGroupEventCount"
-  namespace                 = "CloudTrailMetrics"
+  namespace                 = var.namespace
   period                    = 120
   statistic                 = "Sum"
   threshold                 = 1
@@ -157,7 +162,7 @@ resource "aws_cloudwatch_log_metric_filter" "ec2-activity" {
 
   metric_transformation {
     name      = "EC2ActivityCount"
-    namespace = "CloudTrailMetrics"
+    namespace = var.namespace
     value     = "1"
   }
 }
@@ -167,7 +172,7 @@ resource "aws_cloudwatch_metric_alarm" "ec2-alarm" {
   comparison_operator       = "GreaterThanOrEqualToThreshold"
   evaluation_periods        = 1
   metric_name               = "EC2ActivityCount"
-  namespace                 = "CloudTrailMetrics"
+  namespace                 = var.namespace
   period                    = 120
   statistic                 = "Sum"
   threshold                 = 1
@@ -186,7 +191,7 @@ resource "aws_cloudwatch_log_metric_filter" "unauthorized-api-metric" {
 
   metric_transformation {
     name      = "UnauthorizedAPICalls"
-    namespace = "CloudTrailMetrics"
+    namespace = var.namespace
     value     = "1"
   }
 }
@@ -196,7 +201,7 @@ resource "aws_cloudwatch_metric_alarm" "unauthorized-api-alarm" {
   comparison_operator       = "GreaterThanOrEqualToThreshold"
   evaluation_periods        = 1
   metric_name               = "UnauthorizedAPICalls"
-  namespace                 = "CloudTrailMetrics"
+  namespace                 = var.namespace
   period                    = 120
   statistic                 = "Sum"
   threshold                 = 3
@@ -206,4 +211,231 @@ resource "aws_cloudwatch_metric_alarm" "unauthorized-api-alarm" {
   alarm_actions             = [aws_sns_topic.send-msg-topic.arn]
   treat_missing_data        = "notBreaching"
   insufficient_data_actions = []
+}
+
+# Root Access Usage
+resource "aws_cloudwatch_log_metric_filter" "root_usage-metric" {
+  name           = "RootUsage"
+  pattern        = "{ $.userIdentity.type = \"Root\" && $.userIdentity.invokedBy NOT EXISTS && $.eventType != \"AwsServiceEvent\" }"
+  log_group_name = aws_cloudwatch_log_group.audit-logs.name
+
+  metric_transformation {
+    name      = "RootUsage"
+    namespace = var.namespace
+    value     = "1"
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "root_usage-alarm" {
+  alarm_name                = "RootUsage"
+  comparison_operator       = "GreaterThanOrEqualToThreshold"
+  evaluation_periods        = 1
+  metric_name               = "RootUsage"
+  namespace                 = var.namespace
+  period                    = 120
+  statistic                 = "Sum"
+  threshold                 = 1
+  alarm_description         = "Monitoring for root account logins will provide visibility into the use of a fully privileged account and an opportunity to reduce the use of it."
+  alarm_actions             = [aws_sns_topic.send-msg-topic.arn]
+  treat_missing_data        = "notBreaching"
+  insufficient_data_actions = []
+
+}
+
+## Cloudtrail Configuration Changes
+resource "aws_cloudwatch_log_metric_filter" "cloudtrail_cfg_changes" {
+  name           = "CloudTrailCfgChanges"
+  pattern        = "{ ($.eventName = CreateTrail) || ($.eventName = UpdateTrail) || ($.eventName = DeleteTrail) || ($.eventName = StartLogging) || ($.eventName = StopLogging) }"
+  log_group_name = aws_cloudwatch_log_group.audit-logs.name
+
+  metric_transformation {
+    name      = "CloudTrailCfgChanges"
+    namespace = var.namespace
+    value     = "1"
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "cloudtrail_cfg_changes" {
+  alarm_name                = "CloudTrailCfgChanges"
+  comparison_operator       = "GreaterThanOrEqualToThreshold"
+  evaluation_periods        = 1
+  metric_name               = "CloudTrailCfgChanges"
+  namespace                 = var.namespace
+  period                    = 120
+  statistic                 = "Sum"
+  threshold                 = 1
+  alarm_description         = "Monitoring changes to CloudTrail's configuration will help ensure sustained visibility to activities performed in the AWS account."
+  alarm_actions             = [aws_sns_topic.send-msg-topic.arn]
+  treat_missing_data        = "notBreaching"
+  insufficient_data_actions = []
+
+}
+
+resource "aws_cloudwatch_log_metric_filter" "disable_or_delete_cmk" {
+  name           = "DisableOrDeleteCMK"
+  pattern        = "{ ($.eventSource = kms.amazonaws.com) && (($.eventName = DisableKey) || ($.eventName = ScheduleKeyDeletion)) }"
+  log_group_name = aws_cloudwatch_log_group.audit-logs.name
+
+  metric_transformation {
+    name      = "DisableOrDeleteCMK"
+    namespace = var.namespace
+    value     = "1"
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "disable_or_delete_cmk" {
+  alarm_name                = "DisableOrDeleteCMK"
+  comparison_operator       = "GreaterThanOrEqualToThreshold"
+  evaluation_periods        = "1"
+  metric_name               = "DisableOrDeleteCMK"
+  namespace                 = var.namespace
+  period                    = 120
+  statistic                 = "Sum"
+  threshold                 = 1
+  alarm_description         = "Data encrypted with disabled or deleted keys will no longer be accessible."
+  alarm_actions             = [aws_sns_topic.send-msg-topic.arn]
+  treat_missing_data        = "notBreaching"
+  insufficient_data_actions = []
+}
+
+resource "aws_cloudwatch_log_metric_filter" "s3_bucket_policy_changes" {
+  name           = "S3BucketPolicyChanges"
+  pattern        = "{ ($.eventSource = s3.amazonaws.com) && (($.eventName = PutBucketAcl) || ($.eventName = PutBucketPolicy) || ($.eventName = PutBucketCors) || ($.eventName = PutBucketLifecycle) || ($.eventName = PutBucketReplication) || ($.eventName = DeleteBucketPolicy) || ($.eventName = DeleteBucketCors) || ($.eventName = DeleteBucketLifecycle) || ($.eventName = DeleteBucketReplication)) }"
+  log_group_name = aws_cloudwatch_log_group.audit-logs.name
+
+  metric_transformation {
+    name      = "S3BucketPolicyChanges"
+    namespace = var.namespace
+    value     = "1"
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "s3_bucket_policy_changes" {
+  count = var.s3_bucket_policy_changes ? 1 : 0
+
+  alarm_name                = "S3BucketPolicyChanges"
+  comparison_operator       = "GreaterThanOrEqualToThreshold"
+  evaluation_periods        = 1
+  metric_name               = "S3BucketPolicyChanges"
+  namespace                 = var.namespace
+  period                    = 300
+  statistic                 = "Sum"
+  threshold                 = 1
+  alarm_description         = "Monitoring changes to S3 bucket policies may reduce time to detect and correct permissive policies on sensitive S3 buckets."
+  alarm_actions             = [aws_sns_topic.send-msg-topic.arn]
+  treat_missing_data        = "notBreaching"
+  insufficient_data_actions = []
+
+}
+
+resource "aws_cloudwatch_log_metric_filter" "aws_config_changes" {
+  name           = "AWSConfigChanges"
+  pattern        = "{ ($.eventSource = config.amazonaws.com) && (($.eventName=StopConfigurationRecorder)||($.eventName=DeleteDeliveryChannel)||($.eventName=PutDeliveryChannel)||($.eventName=PutConfigurationRecorder)) }"
+  log_group_name = aws_cloudwatch_log_group.audit-logs.name
+
+  metric_transformation {
+    name      = "AWSConfigChanges"
+    namespace = var.namespace
+    value     = "1"
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "aws_config_changes" {
+  alarm_name                = "AWSConfigChanges"
+  comparison_operator       = "GreaterThanOrEqualToThreshold"
+  evaluation_periods        = 1
+  metric_name               = "AWSConfigChanges"
+  namespace                 = var.namespace
+  period                    = 300
+  statistic                 = "Sum"
+  threshold                 = 1
+  alarm_description         = "Monitoring changes to AWS Config configuration will help ensure sustained visibility of configuration items within the AWS account."
+  alarm_actions             = [aws_sns_topic.send-msg-topic.arn]
+  treat_missing_data        = "notBreaching"
+  insufficient_data_actions = []
+
+}
+
+resource "aws_cloudwatch_log_metric_filter" "nacl_changes" {
+  name           = "NACLChanges"
+  pattern        = "{ ($.eventName = CreateNetworkAcl) || ($.eventName = CreateNetworkAclEntry) || ($.eventName = DeleteNetworkAcl) || ($.eventName = DeleteNetworkAclEntry) || ($.eventName = ReplaceNetworkAclEntry) || ($.eventName = ReplaceNetworkAclAssociation) }"
+  log_group_name = aws_cloudwatch_log_group.audit-logs.name
+
+  metric_transformation {
+    name      = "NACLChanges"
+    namespace = var.namespace
+    value     = "1"
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "nacl_changes" {
+  alarm_name                = "NACLChanges"
+  comparison_operator       = "GreaterThanOrEqualToThreshold"
+  evaluation_periods        = 1
+  metric_name               = "NACLChanges"
+  namespace                 = var.namespace
+  period                    = 300
+  statistic                 = "Sum"
+  threshold                 = 1
+  alarm_description         = "Monitoring changes to NACLs will help ensure that AWS resources and services are not unintentionally exposed."
+  alarm_actions             = [aws_sns_topic.send-msg-topic.arn]
+  treat_missing_data        = "notBreaching"
+  insufficient_data_actions = []
+
+}
+
+resource "aws_cloudwatch_log_metric_filter" "network_gw_changes" {
+  name           = "NetworkGWChanges"
+  pattern        = "{ ($.eventName = CreateCustomerGateway) || ($.eventName = DeleteCustomerGateway) || ($.eventName = AttachInternetGateway) || ($.eventName = CreateInternetGateway) || ($.eventName = DeleteInternetGateway) || ($.eventName = DetachInternetGateway) }"
+  log_group_name = aws_cloudwatch_log_group.audit-logs.name
+
+  metric_transformation {
+    name      = "NetworkGWChanges"
+    namespace = var.namespace
+    value     = "1"
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "network_gw_changes" {
+  alarm_name                = "NetworkGWChanges"
+  comparison_operator       = "GreaterThanOrEqualToThreshold"
+  evaluation_periods        = 1
+  metric_name               = "NetworkGWChanges"
+  namespace                 = var.namespace
+  period                    = 300
+  statistic                 = "Sum"
+  threshold                 = 1
+  alarm_description         = "Monitoring changes to network gateways will help ensure that all ingress/egress traffic traverses the VPC border via a controlled path."
+  alarm_actions             = [aws_sns_topic.send-msg-topic.arn]
+  treat_missing_data        = "notBreaching"
+  insufficient_data_actions = []
+
+}
+
+resource "aws_cloudwatch_log_metric_filter" "route_table_changes" {
+  name           = "RouteTableChanges"
+  pattern        = "{ ($.eventName = CreateRoute) || ($.eventName = CreateRouteTable) || ($.eventName = ReplaceRoute) || ($.eventName = ReplaceRouteTableAssociation) || ($.eventName = DeleteRouteTable) || ($.eventName = DeleteRoute) || ($.eventName = DisassociateRouteTable) }"
+  log_group_name = aws_cloudwatch_log_group.audit-logs.name
+
+  metric_transformation {
+    name      = "RouteTableChanges"
+    namespace = var.namespace
+    value     = "1"
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "route_table_changes" {
+  alarm_name                = "RouteTableChanges"
+  comparison_operator       = "GreaterThanOrEqualToThreshold"
+  evaluation_periods        = 1
+  metric_name               = "RouteTableChanges"
+  namespace                 = var.namespace
+  period                    = 300
+  statistic                 = "Sum"
+  threshold                 = 1
+  alarm_description         = "Monitoring changes to route tables will help ensure that all VPC traffic flows through an expected path."
+  alarm_actions             = [aws_sns_topic.send-msg-topic.arn]
+  treat_missing_data        = "notBreaching"
+  insufficient_data_actions = []
+
 }

@@ -72,11 +72,11 @@ resource "aws_cloudwatch_event_target" "console-login-sns" {
 } */
 
 ### EC2 Instance state change notification
-/* resource "aws_cloudwatch_event_rule" "ec2-status-changes" {
+resource "aws_cloudwatch_event_rule" "ec2-status-changes" {
   name        = "ec2-status-change"
   description = "Capture each Instance state like Stop, Start, Terminate"
   /* event_bus_name = aws_cloudwatch_event_bus.audit-bus.name */
-/* 
+
   event_pattern = jsonencode({
     source      = ["aws.ec2"]
     detail-type = ["EC2 Instance State-change Notification"]
@@ -84,23 +84,14 @@ resource "aws_cloudwatch_event_target" "console-login-sns" {
       state = ["terminated", "stopped", "running"]
     }
   })
-} */ 
+}
 
-
-/* resource "aws_cloudwatch_event_target" "ec2-attach-sns" {
+resource "aws_cloudwatch_event_target" "ec2-status-sns" {
+  arn  = aws_sns_topic.send-msg-topic.arn
   rule = aws_cloudwatch_event_rule.ec2-status-changes.name
-  arn  = aws_sns_topic.send-msg-topic.arn
-  event_bus_name = aws_cloudwatch_event_bus.audit-bus.name
+/* event_bus_name = aws_cloudwatch_event_bus.audit-bus.name */
 
-
-} */
-
-/* resource "aws_cloudwatch_event_target" "ec2-status-sns" {
-  arn  = aws_sns_topic.send-msg-topic.arn
-  rule = aws_cloudwatch_event_rule.ec2-status-changes.name */
-  /* event_bus_name = aws_cloudwatch_event_bus.audit-bus.name */
-
-  /* input_transformer {
+input_transformer {
     input_paths = {
       instance  = "$.detail.requestParameters.instancesSet.items",
       status    = "$.detail.status",
@@ -114,7 +105,44 @@ resource "aws_cloudwatch_event_target" "console-login-sns" {
     }
     input_template = "\"In your AWS Account '<user>' in the region '<region>' at the time '<time>' the following took place: <event> of this instance <instance> and source of <source>.\""
   }
-} */
+}
+
+### Route53 change notification
+resource "aws_cloudwatch_event_rule" "r53-status-changes" {
+  name        = "Route53 Activity"
+  description = "Route53 configuration changes"
+  /* event_bus_name = aws_cloudwatch_event_bus.audit-bus.name */
+
+  event_pattern = jsonencode({
+    source      = ["aws.route53"]
+    detail-type = ["AWS API Call via CloudTrail"]
+    detail = {
+      eventSource = ["route53.amazonaws.com"]
+    }
+  })
+}
+
+
+resource "aws_cloudwatch_event_target" "r53-status-sns" {
+  arn  = aws_sns_topic.send-msg-topic.arn
+  rule = aws_cloudwatch_event_rule.r53-status-changes.name
+/* event_bus_name = aws_cloudwatch_event_bus.audit-bus.name */
+
+input_transformer {
+    input_paths = {
+      instance  = "$.detail.requestParameters.instancesSet.items",
+      status    = "$.detail.status",
+      useragent = "$.detail.userAgent",
+      source    = "$.detail.eventSource",
+      time      = "$.time",
+      event     = "$.detail.eventName",
+      region    = "$.detail.awsRegion",
+      user      = "$.detail.userIdentity.arn"
+
+    }
+    input_template = "\"In your AWS Account '<user>' in the region '<region>' at the time '<time>' the following took place: <event> & <source>.\""
+  }
+}
 
 ## S3 Activity on Bucket and all objects
 /* resource "aws_cloudwatch_event_rule" "s3_activity" {

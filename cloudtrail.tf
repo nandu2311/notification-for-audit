@@ -1,17 +1,18 @@
 data "aws_caller_identity" "current" {}
 
+variable "region" {
+  type = string
+  default = "ap-south-1"
+}
+
+
 resource "aws_cloudtrail" "audit-trail" {
   name                          = "audit-data"
-  s3_bucket_name                = aws_s3_bucket.audit-bucket.id
-  s3_key_prefix                 = "prefix"
+  s3_bucket_name                = aws_s3_bucket.audit-bucket.bucket
   enable_logging                = true
   include_global_service_events = true
+  is_multi_region_trail         = true
 
-  event_selector {
-    read_write_type           = "All"
-    include_management_events = true
-
-  }
 
   # sendint events to Cloudwatch logs group 
   cloud_watch_logs_role_arn  = aws_iam_role.cloudtrail_cloudwatch_role.arn
@@ -26,26 +27,21 @@ resource "aws_s3_bucket" "audit-bucket" {
 }
 
 resource "aws_iam_role" "cloudtrail_cloudwatch_role" {
-  name = "ctw_cloudwatch_roles"
-
-  assume_role_policy = jsonencode(
+  name               = "ctw_cloudwatch_roles"
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
     {
-      "Version" : "2012-10-17",
-      "Statement" : [
-        {
-          "Effect" : "Allow",
-          "Principal" : {
-            "Service" : "cloudtrail.amazonaws.com"
-          },
-          "Action" : "sts:AssumeRole"
-        }
-      ]
-  })
-
-
-  depends_on = [
-    aws_cloudwatch_log_group.audit-logs,
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "cloudtrail.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
   ]
+}
+EOF
 }
 
 data "aws_iam_policy_document" "s3_bucket_policy" {
@@ -75,7 +71,7 @@ data "aws_iam_policy_document" "s3_bucket_policy" {
     }
 
     actions   = ["s3:PutObject"]
-    resources = ["${aws_s3_bucket.audit-bucket.arn}/prefix/AWSLogs/${data.aws_caller_identity.current.account_id}/*"]
+    resources = ["${aws_s3_bucket.audit-bucket.arn}/AWSLogs/*"]
 
     condition {
       test     = "StringEquals"
@@ -105,58 +101,51 @@ resource "aws_cloudwatch_log_stream" "audit-stream" {
 
 resource "aws_iam_policy" "cloudtrail_cwl_logs_policy" {
   name        = "CloudTrail_CWL_Logs_Policy"
-  path        = "/"
   description = "Allows CloudTrail to write logs to the specified CloudWatch Logs log group"
-
-  /* policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream",
-          "logs:PutLogEvents",
-          "logs:DescribeLogStreams",
-          "logs:GetLogEvents",
-          "logs:GetLogGroupFields",
-          "logs:GetLogRecord",
-          "logs:GetQueryResults"
-        ]
-        Resource = ["${aws_cloudwatch_log_stream.audit-stream.arn}*"]
-      }
-    ]
-  }) */
-
-  policy = jsonencode({
-      Version = "2012-10-17"
-      Statement = [
+  policy      = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
         {
-          Sid = "AWSCloudTrailCreateLogStream2014110"
-          Effect = "Allow"
-          Action = [ "logs:CreateLogStream" ]
-          Resource = [ "${aws_cloudwatch_log_stream.audit-stream.arn}:*" ]
+            "Sid": "AWSCloudTrailCreateLogStream2014110",
+            "Effect": "Allow",
+            "Action": [
+                "logs:CreateLogStream"
+            ],
+            "Resource": [
+                "arn:aws:logs:${var.region}:${data.aws_caller_identity.current.account_id}:log-group:${aws_cloudwatch_log_group.audit-logs.id}:log-stream:${data.aws_caller_identity.current.account_id}_CloudTrail_ap-south-1*"
+            ]
         },
         {
-          Sid = "AWSCloudTrailPutLogEvents20141101"
-          Effect = "Allow"
-          Action = [ "logs:PutLogEvents" ]
-          Resource = [ "${aws_cloudwatch_log_stream.audit-stream.arn}:*" ]
-
+            "Sid": "AWSCloudTrailPutLogEvents20141101",
+            "Effect": "Allow",
+            "Action": [
+                "logs:PutLogEvents"
+            ],
+            "Resource": [
+                "arn:aws:logs:${var.region}:${data.aws_caller_identity.current.account_id}:log-group:${aws_cloudwatch_log_group.audit-logs.id}:log-stream:${data.aws_caller_identity.current.account_id}_CloudTrail_ap-south-1*"
+            ]
         }
-      ]
-    })
+    ]
 }
+EOF
+
+}
+
+/* aws_cloudwatch_log_stream.audit-stream.arn */
+/* aws_cloudwatch_log_group.audit-logs.arn */
 
 resource "aws_iam_role_policy_attachment" "cloudtrail_cwl_logs_policy_attachment" {
   policy_arn = aws_iam_policy.cloudtrail_cwl_logs_policy.arn
   role       = aws_iam_role.cloudtrail_cloudwatch_role.name
 }
 
-output "output-test-streamstar" {
-  value = "${aws_cloudwatch_log_stream.audit-stream.arn}:*"
+resource "aws_iam_role_policy_attachment" "cloudtrail_full-access" {
+  policy_arn = "arn:aws:iam::aws:policy/AWSCloudTrail_FullAccess"
+  role       = aws_iam_role.cloudtrail_cloudwatch_role.name
 }
 
-output "output-test-withoutstart" {
-  value = aws_cloudwatch_log_stream.audit-stream.arn
+
+output "values-for-resources" {
+  value = "arn:aws:logs:${var.region}:${data.aws_caller_identity.current.account_id}:log-group:${aws_cloudwatch_log_group.audit-logs.id}:log-stream:${data.aws_caller_identity.current.account_id}_CloudTrail_ap-south-1*"
 }
