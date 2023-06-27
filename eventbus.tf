@@ -87,7 +87,7 @@ resource "aws_cloudwatch_event_rule" "ec2-status-changes" {
 }
 
 resource "aws_cloudwatch_event_target" "ec2-status-sns" {
-  arn  = aws_sns_topic.send-msg-topic.arn
+  arn  = aws_sns_topic.au-03-msg-topic.arn
   rule = aws_cloudwatch_event_rule.ec2-status-changes.name
 /* event_bus_name = aws_cloudwatch_event_bus.audit-bus.name */
 
@@ -109,7 +109,7 @@ input_transformer {
 
 ### Route53 change notification
 resource "aws_cloudwatch_event_rule" "r53-status-changes" {
-  name        = "Route53 Activity"
+  name        = "Route53Activity"
   description = "Route53 configuration changes"
   /* event_bus_name = aws_cloudwatch_event_bus.audit-bus.name */
 
@@ -124,7 +124,7 @@ resource "aws_cloudwatch_event_rule" "r53-status-changes" {
 
 
 resource "aws_cloudwatch_event_target" "r53-status-sns" {
-  arn  = aws_sns_topic.send-msg-topic.arn
+  arn  = aws_sns_topic.au-03-msg-topic.arn
   rule = aws_cloudwatch_event_rule.r53-status-changes.name
 /* event_bus_name = aws_cloudwatch_event_bus.audit-bus.name */
 

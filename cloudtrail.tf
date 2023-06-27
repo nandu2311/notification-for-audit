@@ -5,7 +5,6 @@ variable "region" {
   default = "ap-south-1"
 }
 
-
 resource "aws_cloudtrail" "audit-trail" {
   name                          = "audit-data"
   s3_bucket_name                = aws_s3_bucket.audit-bucket.bucket
@@ -13,8 +12,7 @@ resource "aws_cloudtrail" "audit-trail" {
   include_global_service_events = true
   is_multi_region_trail         = true
 
-
-  # sendint events to Cloudwatch logs group 
+  # sending events to Cloudwatch logs group 
   cloud_watch_logs_role_arn  = aws_iam_role.cloudtrail_cloudwatch_role.arn
   cloud_watch_logs_group_arn = "${aws_cloudwatch_log_group.audit-logs.arn}:*"
 

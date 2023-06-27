@@ -15,6 +15,11 @@ resource "aws_cloudwatch_log_metric_filter" "console-login-failure" {
   }
 }
 
+/* # Define the CloudWatch Logs group as a data source
+data "aws_cloudwatch_log_group" "existing_logs_group" {
+  name = "/aws/lambda/my-existing-logs-group"
+} */
+
 resource "aws_cloudwatch_metric_alarm" "console-failure-alarm" {
   alarm_name                = "Console sign-in failures"
   comparison_operator       = "GreaterThanOrEqualToThreshold"
@@ -27,7 +32,7 @@ resource "aws_cloudwatch_metric_alarm" "console-failure-alarm" {
   datapoints_to_alarm       = 1
   alarm_description         = "This metric monitors console login failure"
   actions_enabled           = "true"
-  alarm_actions             = [aws_sns_topic.send-msg-topic.arn]
+  alarm_actions             = [aws_sns_topic.au-03-msg-topic.arn]
   treat_missing_data        = "notBreaching"
   insufficient_data_actions = []
 }
@@ -58,7 +63,7 @@ resource "aws_cloudwatch_metric_alarm" "console-success-alarm" {
   datapoints_to_alarm       = 1
   alarm_description         = "This metric monitors console login Success"
   actions_enabled           = "true"
-  alarm_actions             = [aws_sns_topic.send-msg-topic.arn]
+  alarm_actions             = [aws_sns_topic.au-03-msg-topic.arn]
   treat_missing_data        = "notBreaching"
   insufficient_data_actions = []
 }
@@ -88,7 +93,7 @@ resource "aws_cloudwatch_metric_alarm" "iam-authentication-alarm" {
   datapoints_to_alarm       = 1
   alarm_description         = "This metric monitors IAM Authentication and Authorization Activity"
   actions_enabled           = "true"
-  alarm_actions             = [aws_sns_topic.send-msg-topic.arn]
+  alarm_actions             = [aws_sns_topic.au-03-msg-topic.arn]
   treat_missing_data        = "notBreaching"
   insufficient_data_actions = []
 }
@@ -118,7 +123,7 @@ resource "aws_cloudwatch_metric_alarm" "iam-policy-alarm" {
   datapoints_to_alarm       = 1
   alarm_description         = "This metric monitors IAM Policy Activity"
   actions_enabled           = "true"
-  alarm_actions             = [aws_sns_topic.send-msg-topic.arn]
+  alarm_actions             = [aws_sns_topic.au-03-msg-topic.arn]
   treat_missing_data        = "notBreaching"
   insufficient_data_actions = []
 }
@@ -148,7 +153,7 @@ resource "aws_cloudwatch_metric_alarm" "security-group-alarm" {
   datapoints_to_alarm       = 1
   alarm_description         = "This metric monitors Security Group configuration changes Activity"
   actions_enabled           = "true"
-  alarm_actions             = [aws_sns_topic.send-msg-topic.arn]
+  alarm_actions             = [aws_sns_topic.au-03-msg-topic.arn]
   treat_missing_data        = "notBreaching"
   insufficient_data_actions = []
 }
@@ -179,7 +184,7 @@ resource "aws_cloudwatch_metric_alarm" "ec2-alarm" {
   datapoints_to_alarm       = 1
   alarm_description         = "This metric monitors Security Group configuration changes Activity"
   actions_enabled           = "true"
-  alarm_actions             = [aws_sns_topic.send-msg-topic.arn]
+  alarm_actions             = [aws_sns_topic.au-03-msg-topic.arn]
   treat_missing_data        = "notBreaching"
   insufficient_data_actions = []
 }
@@ -208,7 +213,7 @@ resource "aws_cloudwatch_metric_alarm" "unauthorized-api-alarm" {
   datapoints_to_alarm       = 1
   alarm_description         = "Monitoring unauthorized API calls will help reveal application errors and may reduce time to detect malicious activity."
   actions_enabled           = "true"
-  alarm_actions             = [aws_sns_topic.send-msg-topic.arn]
+  alarm_actions             = [aws_sns_topic.au-03-msg-topic.arn]
   treat_missing_data        = "notBreaching"
   insufficient_data_actions = []
 }
@@ -236,7 +241,7 @@ resource "aws_cloudwatch_metric_alarm" "root_usage-alarm" {
   statistic                 = "Sum"
   threshold                 = 1
   alarm_description         = "Monitoring for root account logins will provide visibility into the use of a fully privileged account and an opportunity to reduce the use of it."
-  alarm_actions             = [aws_sns_topic.send-msg-topic.arn]
+  alarm_actions             = [aws_sns_topic.au-03-msg-topic.arn]
   treat_missing_data        = "notBreaching"
   insufficient_data_actions = []
 
@@ -265,7 +270,7 @@ resource "aws_cloudwatch_metric_alarm" "cloudtrail_cfg_changes" {
   statistic                 = "Sum"
   threshold                 = 1
   alarm_description         = "Monitoring changes to CloudTrail's configuration will help ensure sustained visibility to activities performed in the AWS account."
-  alarm_actions             = [aws_sns_topic.send-msg-topic.arn]
+  alarm_actions             = [aws_sns_topic.au-03-msg-topic.arn]
   treat_missing_data        = "notBreaching"
   insufficient_data_actions = []
 
@@ -293,7 +298,7 @@ resource "aws_cloudwatch_metric_alarm" "disable_or_delete_cmk" {
   statistic                 = "Sum"
   threshold                 = 1
   alarm_description         = "Data encrypted with disabled or deleted keys will no longer be accessible."
-  alarm_actions             = [aws_sns_topic.send-msg-topic.arn]
+  alarm_actions             = [aws_sns_topic.au-03-msg-topic.arn]
   treat_missing_data        = "notBreaching"
   insufficient_data_actions = []
 }
@@ -311,8 +316,6 @@ resource "aws_cloudwatch_log_metric_filter" "s3_bucket_policy_changes" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "s3_bucket_policy_changes" {
-  count = var.s3_bucket_policy_changes ? 1 : 0
-
   alarm_name                = "S3BucketPolicyChanges"
   comparison_operator       = "GreaterThanOrEqualToThreshold"
   evaluation_periods        = 1
@@ -322,7 +325,7 @@ resource "aws_cloudwatch_metric_alarm" "s3_bucket_policy_changes" {
   statistic                 = "Sum"
   threshold                 = 1
   alarm_description         = "Monitoring changes to S3 bucket policies may reduce time to detect and correct permissive policies on sensitive S3 buckets."
-  alarm_actions             = [aws_sns_topic.send-msg-topic.arn]
+  alarm_actions             = [aws_sns_topic.au-03-msg-topic.arn]
   treat_missing_data        = "notBreaching"
   insufficient_data_actions = []
 
@@ -350,7 +353,7 @@ resource "aws_cloudwatch_metric_alarm" "aws_config_changes" {
   statistic                 = "Sum"
   threshold                 = 1
   alarm_description         = "Monitoring changes to AWS Config configuration will help ensure sustained visibility of configuration items within the AWS account."
-  alarm_actions             = [aws_sns_topic.send-msg-topic.arn]
+  alarm_actions             = [aws_sns_topic.au-03-msg-topic.arn]
   treat_missing_data        = "notBreaching"
   insufficient_data_actions = []
 
@@ -378,7 +381,7 @@ resource "aws_cloudwatch_metric_alarm" "nacl_changes" {
   statistic                 = "Sum"
   threshold                 = 1
   alarm_description         = "Monitoring changes to NACLs will help ensure that AWS resources and services are not unintentionally exposed."
-  alarm_actions             = [aws_sns_topic.send-msg-topic.arn]
+  alarm_actions             = [aws_sns_topic.au-03-msg-topic.arn]
   treat_missing_data        = "notBreaching"
   insufficient_data_actions = []
 
@@ -406,7 +409,7 @@ resource "aws_cloudwatch_metric_alarm" "network_gw_changes" {
   statistic                 = "Sum"
   threshold                 = 1
   alarm_description         = "Monitoring changes to network gateways will help ensure that all ingress/egress traffic traverses the VPC border via a controlled path."
-  alarm_actions             = [aws_sns_topic.send-msg-topic.arn]
+  alarm_actions             = [aws_sns_topic.au-03-msg-topic.arn]
   treat_missing_data        = "notBreaching"
   insufficient_data_actions = []
 
@@ -434,8 +437,65 @@ resource "aws_cloudwatch_metric_alarm" "route_table_changes" {
   statistic                 = "Sum"
   threshold                 = 1
   alarm_description         = "Monitoring changes to route tables will help ensure that all VPC traffic flows through an expected path."
-  alarm_actions             = [aws_sns_topic.send-msg-topic.arn]
+  alarm_actions             = [aws_sns_topic.au-03-msg-topic.arn]
   treat_missing_data        = "notBreaching"
   insufficient_data_actions = []
 
+}
+
+### Web Server Application Monitoring#####
+# Create a CloudWatch Metric Filter
+resource "aws_cloudwatch_log_metric_filter" "webapplication_failure_filter" {
+  name           = "processing-failure-filter"
+  /* pattern        = "[$.EventName, $.EventMessage] = /(?i)(${join("|", [
+    "Application Error",
+    "ASP.NET Unhandled Exception",
+    ".NET Runtime Error",
+    "Service Unexpectedly Terminated",
+    "Service Terminated Unexpectedly",
+    "Application Pool Failure",
+    "Failed Login Attempt",
+    "Object Operation Failed",
+    "Application Pool Disabled",
+    "Internal Server Error",
+    "Service Unavailable"
+  ])})/" */
+  count          = length(var.webapp_logs)
+  pattern        = "[$.EventName, $.EventMessage] = /${var.webapp_logs[count.index]}/"
+  ##Change the log group name here for webapp logs
+  log_group_name = aws_cloudwatch_log_group.audit-logs.name
+
+  
+  metric_transformation {
+    name          = "WebAppFailureCount"
+    namespace     = var.namespace
+    value         = "1"
+    default_value = "0"
+  }
+}
+
+/* output "testing-pattern" {
+  value = aws_cloudwatch_metric_filter.webapplication_failure_filter.pattern
+} */
+
+# Create a CloudWatch Alarm
+resource "aws_cloudwatch_metric_alarm" "webapplication_failure_alarm" {
+  count               = length(var.webapp_logs)
+  alarm_name          = "${var.webapp_logs[count.index]}"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = "1"
+  metric_name         = "WebAppFailureCount"
+  namespace           = var.namespace
+  period              = "60"
+  statistic           = "SampleCount"
+  threshold           = 1
+  alarm_description = "Processing failure alarm for IIS web application"
+  alarm_actions     = [aws_sns_topic.au-03-msg-topic.arn]
+  datapoints_to_alarm = 1
+  treat_missing_data = "notBreaching"
+  insufficient_data_actions = []
+
+  dimensions = {
+    LogGroupName = aws_cloudwatch_log_group.audit-logs.name
+  }
 }
