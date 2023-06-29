@@ -20,7 +20,7 @@ resource "aws_sns_topic_subscription" "au-05_subscription" {
   endpoint  = "nandkishor.sr91@gmail.com"
 }
 
-resource "aws_sns_topic" "au-07-msg-topic" {
+/* resource "aws_sns_topic" "au-07-msg-topic" {
   name         = "Audit-AU-07"
   display_name = "Audit-AU-07-Notification"
 }
@@ -29,4 +29,4 @@ resource "aws_sns_topic_subscription" "au-07_subscription" {
   topic_arn = aws_sns_topic.au-07-msg-topic.arn
   protocol  = "email"
   endpoint  = "nandkishor.sr91@gmail.com"
-}
+} */

@@ -14,5 +14,10 @@ variable "webapp_logs" {
     type = list(any)
 }
 
+variable "au_05_pattern" {
+    description = "pattern for au-05 processing failure events"
+    default = ["ERROR","Exception","Failure","Critical","Timeout","Invalid","Unavailable","Aborted"]
+    type = list(any)
+}
 
 

@@ -461,7 +461,7 @@ resource "aws_cloudwatch_log_metric_filter" "webapplication_failure_filter" {
     "Service Unavailable"
   ])})/" */
   count          = length(var.webapp_logs)
-  pattern        = "[$.EventName, $.EventMessage] = /${var.webapp_logs[count.index]}/"
+  pattern        = "{( $.eventMessage = \"${var.webapp_logs[count.index]}\" )}"
   ##Change the log group name here for webapp logs
   log_group_name = aws_cloudwatch_log_group.audit-logs.name
 

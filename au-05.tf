@@ -1,7 +1,10 @@
 # Create a CloudWatch metric filter to match processing failure events
 resource "aws_cloudwatch_log_metric_filter" "processing_failure_filter" {
   name           = "processing-failure-filter"
-  pattern        = "ERROR || Exception || Failure || Critical || Timeout || Invalid || Unavailable || Aborted"
+  /* count = length(var.au_05_pattern) */
+  /* pattern        = "\"ERROR\" || \"Exception\" || \"Failure\" || \"Critical\" || \"Timeout\" || \"Invalid\" || \"Unavailable\" || \"Aborted\"" */
+  pattern = "{($.errorMessage = \"ERROR\" ) || ($.errorMessage = \"Exception\") || ($.errorMessage = \"Failure\" ) || ($.errorMessage = \"Critical\") || ($.errorMessage = \"Timeout\") || ($.errorMessage = \"Invalid\") || ($.errorMessage = \"Unavailable\") || ($.errorMessage = \"Invalid\" )}"
+  /* pattern = "($.errorMessage = \"ERROR\" )" */
   log_group_name = aws_cloudwatch_log_group.audit-logs.name
   metric_transformation {
     name      = "ProcessingFailureMetric"
